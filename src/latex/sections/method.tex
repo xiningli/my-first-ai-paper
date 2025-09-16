@@ -1,0 +1,8 @@
+\section{Method}
+We outline a generic supervised learning setup. Given a dataset of input--label pairs $\{(x_i, y_i)\}_{i=1}^N$, a model $f_\theta$ with parameters $\theta$ is trained by minimizing an empirical risk
+\begin{equation}
+  \mathcal{L}(\theta) = \frac{1}{N} \sum_{i=1}^{N} \ell\big(f_\theta(x_i), y_i\big),
+\end{equation}
+where $\ell$ is a task-appropriate loss.
+
+Optimization typically proceeds by stochastic gradient descent (SGD) or adaptive variants. For neural networks, gradients are computed via backpropagation~\citep{rumelhart1986learning}. Attention mechanisms~\citep{vaswani2017attention} can replace or augment recurrence and convolution, enabling long-range context aggregation.

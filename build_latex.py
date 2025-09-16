@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_ENV_FILE = "latex.env"
-DEFAULT_TEX = "main.tex"
+DEFAULT_TEX = "src/latex/main.tex"
 DEFAULT_BIB = "main"
 
 
@@ -53,9 +53,9 @@ def which(cmd: str) -> str | None:
     return shutil_which(cmd)
 
 
-def run(cmd: list[str], cwd: Path) -> int:
+def run(cmd: list[str], cwd: Path, env: dict | None = None) -> int:
     print(f"→ Running: {' '.join(shlex.quote(c) for c in cmd)}")
-    proc = subprocess.run(cmd, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.run(cmd, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
     print(proc.stdout)
     return proc.returncode
 
@@ -68,6 +68,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--passes", type=int, default=None, help="Number of final pdflatex passes (default from env or 2)")
     parser.add_argument("--interaction", default=None, help="pdflatex interaction mode (default from env or nonstopmode)")
     parser.add_argument("--no-file-line-error", action="store_true", help="Disable -file-line-error flag")
+    parser.add_argument("--outdir", default=None, help="Output directory for build artifacts (default from env or 'out')")
     args = parser.parse_args(argv)
 
     cwd = Path.cwd()
@@ -90,6 +91,7 @@ def main(argv: list[str]) -> int:
     interaction = args.interaction or env.get("INTERACTION", "nonstopmode")
     file_line_error = env.get("FILE_LINE_ERROR", "true").lower() in ("1", "true", "yes", "on") and not args.no_file_line_error
     final_passes = args.passes if args.passes is not None else int(env.get("PDFLATEX_FINAL_PASSES", "2"))
+    outdir = Path(args.outdir or env.get("OUTDIR", "out"))
 
     tex_file = Path(args.tex)
     bib_base = args.bib
@@ -97,8 +99,11 @@ def main(argv: list[str]) -> int:
     if not tex_file.exists():
         raise BuildError(f"Tex file not found: {tex_file}")
 
-    # First pass
-    cmd = [pdflatex_cmd, f"-interaction={interaction}"]
+    # Ensure output directory exists
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    # First pass (use -output-directory)
+    cmd = [pdflatex_cmd, f"-interaction={interaction}", f"-output-directory={outdir}"]
     if file_line_error:
         cmd.append("-file-line-error")
     cmd.append(str(tex_file))
@@ -106,8 +111,14 @@ def main(argv: list[str]) -> int:
     if code != 0:
         raise BuildError("pdflatex first pass failed")
 
-    # BibTeX
-    code = run([bibtex_cmd, bib_base], cwd)
+    # BibTeX (run in outdir against aux located there)
+    # Ensure bib files in src are discoverable via BIBINPUTS
+    srcdir = tex_file.parent
+    sep = ";" if os.name == "nt" else ":"
+    child_env = os.environ.copy()
+    child_env["BIBINPUTS"] = str(srcdir) + sep
+    child_env["BSTINPUTS"] = str(srcdir) + sep
+    code = run([bibtex_cmd, bib_base], outdir, env=child_env)
     if code != 0:
         raise BuildError("bibtex failed")
 
@@ -118,7 +129,7 @@ def main(argv: list[str]) -> int:
         if code != 0:
             raise BuildError(f"pdflatex final pass {i+1} failed")
 
-    pdf = tex_file.with_suffix('.pdf')
+    pdf = outdir / tex_file.with_suffix('.pdf').name
     if not pdf.exists():
         raise BuildError("Build finished without producing PDF")
 

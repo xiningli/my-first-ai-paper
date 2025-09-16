@@ -1,0 +1,12 @@
+# Normalize all text files to LF in repo
+* text=auto eol=lf
+
+# Treat common binary types correctly
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+*.ttf binary
+*.otf binary
