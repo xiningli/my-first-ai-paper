@@ -18,8 +18,9 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+import re
 
-DEFAULT_ENV_FILE = "latex.env"
+DEFAULT_ENV_FILE = "src/latex/latex.env"
 DEFAULT_TEX = "src/latex/main.tex"
 DEFAULT_BIB = "main"
 
@@ -112,7 +113,29 @@ def main(argv: list[str]) -> int:
         raise BuildError("pdflatex first pass failed")
 
     # BibTeX (run in outdir against aux located there)
-    # Ensure bib files in src are discoverable via BIBINPUTS
+    # Ensure bib files are accessible: copy any referenced .bib files to outdir
+    aux_path = outdir / tex_file.with_suffix('.aux').name
+    if aux_path.exists():
+        aux_text = aux_path.read_text(encoding="utf-8", errors="ignore")
+        # Look for lines like: \bibdata{references} or \bibdata{src/latex/references}
+        m = re.search(r"\\bibdata\{([^}]*)\}", aux_text)
+        if m:
+            biblist = [b.strip() for b in m.group(1).split(',') if b.strip()]
+            for bibbase in biblist:
+                # Accept absolute or relative bases, add .bib if missing
+                if not bibbase.endswith('.bib'):
+                    bibbase += '.bib'
+                # Resolve from project root
+                src_candidate = cwd / bibbase
+                if not src_candidate.exists():
+                    # Try relative to the main tex directory
+                    src_candidate = tex_file.parent / bibbase
+                if src_candidate.exists():
+                    target = outdir / Path(bibbase).name
+                    if not target.exists() or target.read_bytes() != src_candidate.read_bytes():
+                        target.write_bytes(src_candidate.read_bytes())
+                # else: leave to BIBINPUTS to find
+    # Prepare env to help MiKTeX find bst/bib if still needed
     srcdir = tex_file.parent
     sep = ";" if os.name == "nt" else ":"
     child_env = os.environ.copy()

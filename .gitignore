@@ -15,3 +15,9 @@
 
 # VS Code
 .vscode/
+
+# Build outputs
+out/
+
+# Generated figures (optional; comment out to commit)
+# src/latex/figures/*.png

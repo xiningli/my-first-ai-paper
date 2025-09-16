@@ -12,7 +12,7 @@ This is a minimal academic paper template for AI research, set up with LaTeX and
 	- `requirements.txt`: Python dependencies (matplotlib, numpy)
 - `out/` (generated): build artifacts and final PDF (git-ignored)
 - `.gitattributes`, `.editorconfig`: LF + UTF-8 normalization
-- `latexmkrc`: Config for `latexmk` build (outputs to `out/`)
+- `src/latex/latexmkrc`: Config for `latexmk` build (outputs to `out/`)
 
 ## Line endings and encoding
 This project standardizes on:
@@ -49,9 +49,9 @@ Remove-Item -Recurse -Force .\out -ErrorAction SilentlyContinue
 
 ## Cross-platform Python build (recommended)
 
-This repo includes a reusable Python script that reads `latex.env` to locate tools across OSes.
+This repo includes a reusable Python script that reads `src/latex/latex.env` to locate tools across OSes.
 
-1) Configure tools in `latex.env` (already prefilled for your machine on Windows/MiKTeX):
+1) Configure tools in `src/latex/latex.env` (already prefilled for your machine on Windows/MiKTeX):
 
 ```
 PDFLATEX=C:\\Users\\<you>\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe
@@ -68,7 +68,7 @@ BIBTEX=bibtex
 2) Build with Python (outputs to `out/`):
 
 ```
-python build_latex.py --env latex.env --tex src/latex/main.tex --bib main
+python build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
 ```
 
 Flags:
