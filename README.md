@@ -11,10 +11,8 @@ This is a minimal academic paper template for AI research, set up with LaTeX and
 
 ## Build (Windows PowerShell)
 Prerequisites:
-- Install TeX distribution (MiKTeX or TeX Live)
-- Optional: VS Code + LaTeX Workshop extension
 
-Quick compile with latexmk (recommended):
+ Quick compile with latexmk (recommended):
 ```powershell
 latexmk -pdf -interaction=nonstopmode main.tex
 ```
@@ -25,6 +23,36 @@ Clean build artifacts:
 latexmk -C
 ```
 
+## Cross-platform Python build (recommended)
+
+This repo includes a reusable Python script that reads `latex.env` to locate tools across OSes.
+
+1) Configure tools in `latex.env` (already prefilled for your machine on Windows/MiKTeX):
+
+```
+PDFLATEX=C:\\Users\\<you>\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\pdflatex.exe
+BIBTEX=C:\\Users\\<you>\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\bibtex.exe
+```
+
+On macOS/Linux, you can just set:
+
+```
+PDFLATEX=pdflatex
+BIBTEX=bibtex
+```
+
+2) Build with Python:
+
+```
+python build_latex.py --env latex.env --tex main.tex --bib main
+```
+
+Flags:
+- `--passes N` to change final pdflatex passes (default 2)
+- `--interaction=nonstopmode|batchmode|scrollmode|errorstopmode`
+- `--no-file-line-error` to disable `-file-line-error`
+
+The script runs: pdflatex → bibtex → pdflatex ×2 and emits clear logs. It exits non-zero on failure.
 ## Citing
 Use `\citep{key}` for parenthetical citations and `\citet{key}` for textual citations (natbib). Add new entries in `references.bib`.
 
