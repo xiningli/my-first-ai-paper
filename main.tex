@@ -1,0 +1,60 @@
+% Small AI Academic Paper Sample using LaTeX + BibTeX
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{times}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath, amssymb}
+\usepackage{xcolor}
+\usepackage[numbers]{natbib}
+
+% Hyperref setup
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=teal,
+  urlcolor=magenta,
+  pdftitle={Small AI Paper Sample},
+  pdfauthor={Your Name},
+}
+
+% Title
+\title{A Small Sample Paper in Artificial Intelligence}
+\author{Your Name \\ Your Affiliation \\ \texttt{you@example.com}}
+\date{September 16, 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We provide a compact LaTeX template for an AI research paper with Bib\TeX{} references and common sections. It includes figures, tables, and sample citations to classic and modern works in machine learning and natural language processing.
+\end{abstract}
+
+% Example figure placeholder
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=0.7\linewidth]{figures/example.png}
+%   \caption{An example figure.}
+%   \label{fig:example}
+% \end{figure}
+
+\input{sections/introduction}
+\input{sections/related_work}
+\input{sections/method}
+\input{sections/experiments}
+\input{sections/conclusion}
+
+% Acknowledgments (optional)
+% \section*{Acknowledgments}
+% We thank ...
+
+% References
+% You can switch to \bibliographystyle{plainnat} for author-year with numbers option removed
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\end{document}
