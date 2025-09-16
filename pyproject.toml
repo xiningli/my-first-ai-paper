@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "ai-paper-sample"
+version = "0.1.0"
+description = "Small AI paper sample with LaTeX + Python plotting"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+# This is an application, not a distributable package
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+matplotlib = ">=3.7,<4.0"
+numpy = ">=1.24,<3.0"
+
+[tool.poetry.group.dev.dependencies]
+# Add dev-only tools here if needed (e.g., black, ruff)
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"

@@ -78,16 +78,45 @@ Flags:
 
 The script runs: pdflatex → bibtex → pdflatex ×2 and emits clear logs. It exits non-zero on failure. Final PDF: `out/main.pdf`.
 
-## Generate the example figure
+## Poetry (recommended, Maven-like)
 
-Install Python dependencies and generate the plot image:
+Use Poetry for dependency management and an in-project virtual environment (like Maven for Java):
 
+1) Install Poetry (Windows PowerShell):
 ```powershell
-pip install -r src/python/requirements.txt
-python src/python/generate_plot.py
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+$env:Path = "$env:APPDATA\Python\Scripts;$env:LOCALAPPDATA\pypoetry\Cache\Scripts;$env:Path"
+poetry --version
 ```
 
-This writes `src/latex/figures/simple_plot.png`, which is included by `src/latex/main.tex`.
+2) Configure Poetry to create venv in the project and install deps:
+```powershell
+poetry config virtualenvs.in-project true
+poetry install
+```
+
+3) Generate the plot and build the PDF:
+```powershell
+poetry run python src/python/generate_plot.py
+poetry run python build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
+```
+
+VS Code tasks provided:
+- `poetry: ensure in-project venv` → `poetry: install` → `poetry: plot` → `poetry: build pdf`
+
+### Alternative: plain venv + pip
+
+If you prefer not to install Poetry, you can still use a local venv:
+
+```powershell
+python -m venv .venv
+. .\.venv\Scripts\Activate.ps1
+pip install matplotlib numpy
+python src/python/generate_plot.py
+python build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
+```
+
+The generated figure `src/latex/figures/simple_plot.png` is included by `src/latex/main.tex`.
 ## Citing
 Use `\citep{key}` for parenthetical citations and `\citet{key}` for textual citations (natbib). Add new entries in `references.bib`.
 

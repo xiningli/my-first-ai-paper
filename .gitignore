@@ -19,5 +19,10 @@
 # Build outputs
 out/
 
+# Python venv and caches
+.venv/
+__pycache__/
+*.pyc
+
 # Generated figures (optional; comment out to commit)
 # src/latex/figures/*.png
