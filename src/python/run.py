@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 def main():
     # Resolve project root from this script's location
     repo_root = Path(__file__).resolve().parents[2]
-    fig_dir = repo_root / "src" / "latex" / "figures"
+    fig_dir = repo_root / "src" / "latex" / "generated_data"
     fig_dir.mkdir(parents=True, exist_ok=True)
     out_png = fig_dir / "simple_plot.png"
 

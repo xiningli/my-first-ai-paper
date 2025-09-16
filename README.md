@@ -2,14 +2,53 @@
 
 This is a minimal academic paper template for AI research, set up with LaTeX and BibTeX. It includes common sections and seminal citations.
 
+## TL;DR
+
+Run these from Windows PowerShell. Assumes MiKTeX/latexmk are installed; Python + Poetry are used for the Python flow.
+
+1) LaTeX-only (build PDF):
+
+Option A: latexmk
+```powershell
+latexmk -pdf -interaction=nonstopmode src/latex/main.tex
+```
+Option B: one script
+```powershell
+python src/latex/build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
+```
+
+2) Python-only (generate figure via Poetry):
+
+```powershell
+cd src/python
+poetry config virtualenvs.in-project true
+poetry install
+poetry run python ../python/run.py
+```
+
+3) Python + LaTeX (generate figure, then build PDF):
+
+```powershell
+cd src/python
+poetry config virtualenvs.in-project true
+poetry install
+poetry run python ../python/run.py
+poetry run python ../../src/latex/build_latex.py --env ../../src/latex/latex.env --tex ../../src/latex/main.tex --bib main
+
+Or a single command from repo root:
+```powershell
+python generate_data_and_doc.py
+```
+```
+
 ## Contents
 - `src/latex/`: LaTeX sources (canonical entry: `src/latex/main.tex`)
 	- `sections/`: Introduction, Related Work, Method, Experiments, Conclusion
 	- `figures/`: Generated figures (e.g., `simple_plot.png`)
 	- `references.bib`: Sample BibTeX entries
-- `src/python/`: helper scripts and Python deps
-	- `generate_plot.py`: generates `src/latex/figures/simple_plot.png`
-	- `requirements.txt`: Python dependencies (matplotlib, numpy)
+ - `src/python/`: Python project (Poetry-managed)
+	- `main.py`: generates `src/latex/figures/simple_plot.png`
+	- `pyproject.toml`: Python dependencies and tooling (Poetry)
 - `out/` (generated): build artifacts and final PDF (git-ignored)
 - `.gitattributes`, `.editorconfig`: LF + UTF-8 normalization
 - `src/latex/latexmkrc`: Config for `latexmk` build (outputs to `out/`)
@@ -33,7 +72,7 @@ Tools configured to use `out/`:
 - `latexmk` via `latexmkrc`
 - `build_latex.py` via `OUTDIR` in `latex.env` (default `out`)
 
-## Build (Windows PowerShell)
+## 1) LaTeX-only build (Windows PowerShell)
 
 Quick compile with latexmk (recommended):
 ```powershell
@@ -78,9 +117,9 @@ Flags:
 
 The script runs: pdflatex → bibtex → pdflatex ×2 and emits clear logs. It exits non-zero on failure. Final PDF: `out/main.pdf`.
 
-## Poetry (recommended, Maven-like)
+## 2) Python workflow with Poetry (Maven-like)
 
-Use Poetry for dependency management and an in-project virtual environment (like Maven for Java):
+Use Poetry for dependency management and an in-project virtual environment (like Maven for Java). The `pyproject.toml` lives in `src/python/`.
 
 1) Install Poetry (Windows PowerShell):
 ```powershell
@@ -89,16 +128,24 @@ $env:Path = "$env:APPDATA\Python\Scripts;$env:LOCALAPPDATA\pypoetry\Cache\Script
 poetry --version
 ```
 
-2) Configure Poetry to create venv in the project and install deps:
+2) Configure Poetry to create venv in the `src/python` project and install deps:
 ```powershell
+cd src/python
 poetry config virtualenvs.in-project true
 poetry install
 ```
 
-3) Generate the plot and build the PDF:
+3) Generate the plot and build the PDF (from repo root or `src/python` as noted):
+To generate the figure only:
+- VS Code task: `poetry: plot`
+- Or manually from `src/python`: `poetry run python ../python/main.py`
 ```powershell
-poetry run python src/python/generate_plot.py
-poetry run python build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
+# From src/python (generate figure and then build PDF)
+poetry run python ../python/main.py
+poetry run python ../../build_latex.py --env ../../src/latex/latex.env --tex ../../src/latex/main.tex --bib main
+
+# Or, using VS Code tasks (from repo root):
+# poetry: ensure in-project venv → poetry: install → poetry: plot → poetry: build pdf
 ```
 
 VS Code tasks provided:
@@ -106,13 +153,11 @@ VS Code tasks provided:
 
 ### Alternative: plain venv + pip
 
-If you prefer not to install Poetry, you can still use a local venv:
-
 ```powershell
 python -m venv .venv
 . .\.venv\Scripts\Activate.ps1
 pip install matplotlib numpy
-python src/python/generate_plot.py
+python src/python/main.py
 python build_latex.py --env src/latex/latex.env --tex src/latex/main.tex --bib main
 ```
 
