@@ -172,3 +172,56 @@ Use `\citep{key}` for parenthetical citations and `\citet{key}` for textual cita
 
 ## License
 MIT — see `LICENSE`.
+
+## (New) Policy Corpus Crawling (crawl4ai integration)
+
+An experimental corpus crawler is provided at `src/python/corpus_crawler.py` using the `crawl4ai` framework.
+
+### Install Dependencies
+```powershell
+cd src/python
+poetry add crawl4ai httpx beautifulsoup4 lxml pdfminer-six PyYAML
+# (optional headless browser support)
+poetry add --optional playwright
+poetry run playwright install chromium
+```
+
+### Sources Configuration
+Uses the existing `data/corpus/sources.yaml` format (categories → sources). Each source may define:
+```
+key, name, enabled, rss (optional), html_index, link_regex, max_index, paginate:
+	mode: query
+	param: page
+	start: 1
+	max_pages: 10
+	stop_on_empty: true
+```
+
+### Basic Validation (no downloads)
+```powershell
+poetry run python corpus_crawler.py --config ../../data/corpus/sources.yaml --categories national-interests --sources rand_articles --validate-sources --exhaust-pagination
+```
+
+### Download RAND Articles (word-only)
+```powershell
+poetry run python corpus_crawler.py --config ../../data/corpus/sources.yaml --categories national-interests --sources rand_articles --word-only --exhaust-pagination --target-bytes 50000000 --max-items 1000
+```
+
+### Output Layout
+```
+data/corpus/
+	raw/            (reserved, not fully used yet by crawler)
+	processed/<category>/<source>/<category>-<source>-<hashprefix>.txt
+	meta/index.jsonl   # one JSON metadata record per line
+```
+
+### Notes
+- If `crawl4ai` is unavailable, script falls back to simple HTTP GET + HTML text extraction (BeautifulSoup).
+- For blocked pages (403) a browser-like User-Agent + Referer retry is attempted.
+- Dedup based on sha256 hash of normalized (or word-only tokenized) text.
+- Increase `max_index` or use `--exhaust-pagination` for deeper pagination.
+
+### Future Enhancements
+- Add concurrency via asyncio or thread pool.
+- PDF text extraction integration.
+- Rate limiting / politeness delays per domain.
