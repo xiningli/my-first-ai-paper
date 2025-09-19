@@ -26,3 +26,5 @@ __pycache__/
 
 # Generated figures (optional; comment out to commit)
 # src/latex/figures/*.png
+
+src/python/data

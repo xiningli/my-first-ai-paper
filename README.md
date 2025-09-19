@@ -225,3 +225,101 @@ data/corpus/
 - Add concurrency via asyncio or thread pool.
 - PDF text extraction integration.
 - Rate limiting / politeness delays per domain.
+
+### Deep Crawl Example: NBC Politics 10 MB Budget
+
+If you just want to grab up to ~10 MB of article markdown from the NBC News Politics section using the newer deep crawl API in `crawl4ai >=0.7`, you can use the following standalone script (save as `src/python/nbc_politics_crawl.py`). It performs a breadth‑first crawl constrained to the `/politics` path, applies a simple article URL regex, and stops when the byte budget is exceeded or safety caps hit.
+
+Install/upgrade dependency first (already specified in `pyproject.toml`):
+```powershell
+cd src/python
+poetry install  # ensures crawl4ai >=0.7
+```
+
+Script:
+```python
+# pip install "crawl4ai>=0.7,<0.8"  # if not using Poetry
+import asyncio, re, json, os
+from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig
+from crawl4ai.deep_crawling import BFSDeepCrawlStrategy
+
+START_URL = "https://www.nbcnews.com/politics"
+OUT_PATH  = "nbc_politics_10mb.jsonl"
+BYTE_BUDGET = 10 * 1024 * 1024  # 10 MB
+
+# Only follow NBC News politics article URLs (adjust as needed)
+ARTICLE_RE = re.compile(r"^https://www\.nbcnews\.com/politics/[^?#]+$")
+
+async def main():
+	if os.path.exists(OUT_PATH):
+		os.remove(OUT_PATH)
+
+	total_bytes = 0
+	seen = set()
+
+	browser = BrowserConfig(
+		headless=True,
+		# Respectful defaults; adjust if site uses heavy JS:
+		viewport_width=1366, viewport_height=768,
+	)
+
+	run_cfg = CrawlerRunConfig(
+		deep_crawl_strategy=BFSDeepCrawlStrategy(
+			max_depth=2,                 # stay shallow to cap size
+			include_external=False,      # keep within nbcnews.com
+			max_pages=200                # hard page cap as a backstop
+		),
+		# Keep it tidy and fast:
+		remove_overlay_elements=True,
+		markdown_generator="basic",     # clean, LLM-ready Markdown
+		obey_robots_txt=True,           # be a good citizen
+		verbose=True
+	)
+
+	def url_filter(u: str) -> bool:
+		# stay in the politics section and only pages that look like articles
+		return ARTICLE_RE.match(u) is not None
+
+	async with AsyncWebCrawler(browser_config=browser) as crawler:
+		async for result in crawler.deep_crawl(
+			start_url=START_URL,
+			crawler_run_config=run_cfg,
+			url_filter=url_filter,
+		):
+			if not result or result.error:
+				continue
+			if result.url in seen:
+				continue
+			seen.add(result.url)
+
+			md = (result.markdown or "").strip()
+			if not md:
+				continue
+
+			# Enforce running byte budget
+			new_total = total_bytes + len(md.encode("utf-8"))
+			if new_total > BYTE_BUDGET:
+				break
+
+			with open(OUT_PATH, "a", encoding="utf-8") as f:
+				f.write(json.dumps({"url": result.url, "markdown": md}, ensure_ascii=False) + "\n")
+
+			total_bytes = new_total
+
+	print(f"Done. Saved ~{total_bytes/1024/1024:.2f} MB to {OUT_PATH}")
+
+if __name__ == "__main__":
+	asyncio.run(main())
+```
+
+Run it (from `src/python`):
+```powershell
+poetry run python nbc_politics_crawl.py
+```
+
+Output: one JSON object per line with `url` and `markdown`. Adjust `ARTICLE_RE`, `max_depth`, or `max_pages` for different coverage vs. precision tradeoffs.
+
+Politeness tips:
+- Keep `obey_robots_txt=True` (default here) unless you have permission otherwise.
+- Add a small delay (e.g., `await asyncio.sleep(0.3)`) in the loop if you reduce depth caps or increase concurrency.
+- Avoid storing personally identifiable information (PII) if not needed.

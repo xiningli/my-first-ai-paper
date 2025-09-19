@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+# Force a non-interactive backend early to avoid any potential GUI blocking
+os.environ.setdefault("MPLBACKEND", "Agg")
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,15 +18,16 @@ def main():
     x = np.linspace(0, 2 * np.pi, 200)
     y = np.sin(x)
 
-    plt.figure(figsize=(6, 3.5), dpi=150)
-    plt.plot(x, y, label="sin(x)")
-    plt.title("Simple Sine Wave")
-    plt.xlabel("x")
-    plt.ylabel("sin(x)")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(out_png)
+    fig, ax = plt.subplots(figsize=(6, 3.5), dpi=150)
+    ax.plot(x, y, label="sin(x)")
+    ax.set_title("Simple Sine Wave")
+    ax.set_xlabel("x")
+    ax.set_ylabel("sin(x)")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(out_png)
+    plt.close(fig)
     print(f"Saved figure to {out_png}")
 
 

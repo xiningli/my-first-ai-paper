@@ -8,17 +8,20 @@ Runs:
 from __future__ import annotations
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
 
-def run(cmd: list[str], cwd: Path | None = None) -> int:
+def run(cmd: list[str], cwd: Path | None = None, env_extra: dict | None = None) -> int:
     print("→", " ".join(cmd))
+    env = os.environ.copy()
+    if env_extra:
+        env.update(env_extra)
     try:
-        return subprocess.call(cmd, cwd=str(cwd) if cwd else None)
+        return subprocess.call(cmd, cwd=str(cwd) if cwd else None, env=env)
     except FileNotFoundError:
-        # e.g., poetry is not installed on PATH
         return 127
 
 
@@ -28,15 +31,15 @@ def ensure_data_with_poetry_or_fallback() -> int:
     cfg = run(["poetry", "config", "virtualenvs.in-project", "true"], cwd=pyproj_dir)
     inst = run(["poetry", "install"], cwd=pyproj_dir) if cfg == 0 else 1
     if cfg == 0 and inst == 0:
-        # Poetry env ready
-        return run(["poetry", "run", "python", "../python/run.py"], cwd=pyproj_dir)
+        # Poetry env ready - enforce headless MPL backend
+        return run(["poetry", "run", "python", "../python/run.py"], cwd=pyproj_dir, env_extra={"MPLBACKEND": "Agg"})
 
     # Fallback: use system Python, install minimal deps, then run
     print("WARN: Poetry unavailable; falling back to system Python (pip install matplotlib numpy).")
     pip_cmd = [sys.executable, "-m", "pip", "install", "matplotlib", "numpy"]
     if run(pip_cmd, cwd=ROOT) != 0:
         return 1
-    return run([sys.executable, str(ROOT / "src/python/run.py")], cwd=ROOT)
+    return run([sys.executable, str(ROOT / "src/python/run.py")], cwd=ROOT, env_extra={"MPLBACKEND": "Agg"})
 
 
 def build_latex() -> int:
