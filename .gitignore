@@ -28,3 +28,4 @@ __pycache__/
 # src/latex/figures/*.png
 
 src/python/data
+src/python/data_bk
